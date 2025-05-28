@@ -1,0 +1,71 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Operator
+actor Technician
+actor Supervisor
+
+boundary Dashboard
+boundary FaultManagementScreen
+boundary FaultReportForm
+boundary ReportListScreen
+boundary ReportDetailsScreen
+
+control ReportFormController
+control ReportValidationController
+control ReportPersistenceController
+control ReportFilterController
+control LogController
+control NotificationController
+
+entity Robot
+entity FaultReport
+database Database
+
+' Βασική Ροή – Υποβολή Αναφοράς από Operator
+Operator --> Dashboard : login()
+Dashboard --> FaultManagementScreen : accessFaultMenu()
+FaultManagementScreen --> ReportFormController : selectSubmitFault()
+ReportFormController --> FaultReportForm : showForm()
+Operator --> FaultReportForm : fillDetails()
+FaultReportForm --> Robot : selectedByUser()
+FaultReportForm --> FaultReport : createTemporary()
+FaultReport --> ReportValidationController : validate()
+ReportValidationController --> ReportPersistenceController : saveReport()
+ReportPersistenceController --> Database : insert(faultReport)
+Database --> ReportPersistenceController : OK
+ReportPersistenceController --> NotificationController : notifyTechnician()
+NotificationController --> Technician : receiveNotification()
+
+' Εναλλακτική 1 – Ανεπαρκή δεδομένα
+skinparam ArrowColor Red
+ReportValidationController --> FaultReportForm : showMissingFields()
+FaultReportForm --> Operator : correctAndResubmit()
+
+' Εναλλακτική 2 – Σφάλμα βάσης
+ReportPersistenceController --> Database : insert()
+Database --> ReportPersistenceController : error()
+ReportPersistenceController --> FaultReportForm : showSubmissionError()
+ReportPersistenceController --> LogController : logSubmissionFailure()
+
+' Εναλλακτική 3 – Προβολή Αναφορών από όλους
+Supervisor --> FaultManagementScreen : selectViewReports()
+Technician --> FaultManagementScreen : selectViewReports()
+FaultManagementScreen --> ReportFilterController : requestList()
+ReportFilterController --> Database : getReports()
+Database --> ReportFilterController : returnList()
+ReportFilterController --> ReportListScreen : displayList()
+
+Supervisor --> ReportListScreen : filterReports()
+Technician --> ReportListScreen : filterReports()
+ReportListScreen --> ReportFilterController : applyFilters()
+ReportFilterController --> Database : filteredQuery()
+Database --> ReportFilterController : filteredList()
+ReportFilterController --> ReportListScreen : updateList()
+
+Supervisor --> ReportListScreen : selectReport()
+Technician --> ReportListScreen : selectReport()
+ReportListScreen --> ReportDetailsScreen : showDetails()
+
+@enduml

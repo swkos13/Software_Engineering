@@ -1,0 +1,58 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Administrator
+
+boundary Dashboard
+boundary SettingsScreen
+boundary UserListScreen
+boundary UserCreationForm
+boundary AccessRightsScreen
+boundary SecuritySettingsScreen
+
+control SettingsAccessController
+control UserManagementController
+control AccessRightsController
+control SecuritySettingsController
+control ValidationController
+control LogController
+
+entity AccessPolicy
+database Database
+
+' Βασική Ροή – Δημιουργία νέου χρήστη
+Administrator --> Dashboard : login()
+Dashboard --> SettingsScreen : openSystemSettings()
+SettingsScreen --> SettingsAccessController : displayOptions()
+SettingsAccessController --> UserListScreen : openUserManagement()
+UserListScreen --> UserManagementController : clickAddUser()
+UserManagementController --> UserCreationForm : displayForm()
+Administrator --> UserCreationForm : fillUserData()
+UserCreationForm --> ValidationController : validate()
+ValidationController --> UserManagementController : confirmed()
+UserManagementController --> Database : saveUser()
+Database --> UserManagementController : success
+UserManagementController --> UserListScreen : refreshList()
+
+' Εναλλακτική Ροή 1 – Αποτυχία αποθήκευσης
+skinparam ArrowColor Red
+UserManagementController --> Database : saveUser()
+Database --> UserManagementController : error
+UserManagementController --> UserCreationForm : showError()
+
+' Εναλλακτική Ροή 2 – Επεξεργασία Δικαιωμάτων
+SettingsAccessController --> AccessRightsScreen : openAccessRights()
+AccessRightsScreen --> AccessRightsController : selectUser()
+AccessRightsController --> AccessPolicy : modify()
+AccessRightsController --> Database : updateAccess()
+Database --> AccessRightsController : success
+AccessRightsController --> AccessRightsScreen : notifyUser()
+
+' Εναλλακτική Ροή 3 – Ρυθμίσεις Ασφαλείας
+SettingsAccessController --> SecuritySettingsScreen : openSecurity()
+SecuritySettingsScreen --> SecuritySettingsController : changePolicy()
+SecuritySettingsController --> Database : saveSecuritySettings()
+SecuritySettingsController --> LogController : notifyAllUsers()
+
+@enduml

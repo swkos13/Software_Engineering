@@ -1,0 +1,57 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Technician
+
+boundary Dashboard
+boundary RobotListScreen
+boundary RobotDetailsScreen
+boundary StatusUpdateDialog
+
+control RobotListController
+control RobotStatusAccessController
+control RobotStatusUpdateController
+control RobotValidationController
+control LogController
+
+entity Robot
+database Database
+
+' Βασική Ροή – Ενημέρωση κατάστασης
+Technician --> Dashboard : login()
+Dashboard --> RobotListScreen : accessRobotManagement()
+RobotListScreen --> RobotListController : requestRobotList()
+RobotListController --> Database : fetchAllRobots()
+Database --> RobotListController : robots
+RobotListController --> RobotListScreen : displayRobots()
+
+Technician --> RobotListScreen : applyFilter("Σε Διάγνωση/Εκτός Λειτουργίας")
+RobotListScreen --> RobotListController : filterList()
+RobotListController --> RobotListScreen : updateList()
+
+Technician --> RobotListScreen : selectRobot()
+RobotListScreen --> RobotStatusAccessController : getDetails()
+RobotStatusAccessController --> Robot : getState()
+RobotStatusAccessController --> RobotDetailsScreen : showDetails()
+
+Technician --> RobotDetailsScreen : chooseUpdateStatus()
+RobotDetailsScreen --> StatusUpdateDialog : showStatusOptions()
+Technician --> StatusUpdateDialog : selectNewStatus() + optionalComment
+StatusUpdateDialog --> RobotValidationController : validateChange()
+RobotValidationController --> RobotStatusUpdateController : confirmUpdate()
+RobotStatusUpdateController --> Robot : updateState()
+RobotStatusUpdateController --> Database : persistChange()
+RobotStatusUpdateController --> RobotListScreen : refreshStatus()
+
+' Εναλλακτική 1 – Αποτυχία Ενημέρωσης
+skinparam ArrowColor Red
+RobotStatusUpdateController --> Database : error()
+RobotStatusUpdateController --> StatusUpdateDialog : showError()
+StatusUpdateDialog --> Technician : retryOption()
+
+' Εναλλακτική 2 – Ρομπότ μη διαθέσιμο για αλλαγή
+RobotStatusAccessController --> Robot : isUnavailable()
+RobotStatusAccessController --> RobotDetailsScreen : showError("Μη διαθέσιμο")
+LogController --> Database : logAttempt()
+@enduml

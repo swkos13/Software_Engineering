@@ -1,0 +1,65 @@
+@startuml
+title Use Case 8 – Παραγωγή Αναλυτικής Αναφοράς Απόδοσης Ρομπότ (v0.1)
+
+actor Supervisor
+participant Dashboard
+participant ReportMainScreen
+participant ReportCriteriaForm
+participant ReportViewScreen
+participant ExportDialog
+control ReportAccessController
+control ReportCriteriaController
+control ReportGenerationController
+control ReportExportController
+control ReportHistoryController
+database Database
+entity PerformanceReport
+entity Robot
+
+Supervisor -> Dashboard : login()
+Dashboard -> ReportMainScreen : openPerformanceReports()
+ReportMainScreen -> ReportAccessController : showMenu()
+ReportAccessController -> ReportCriteriaForm : openForm()
+
+Supervisor -> ReportCriteriaForm : inputCriteria()
+ReportCriteriaForm -> ReportCriteriaController : submit()
+ReportCriteriaController -> Database : fetchPerformanceData()
+Database --> ReportCriteriaController : returnData()
+ReportCriteriaController -> ReportGenerationController : process()
+ReportGenerationController -> PerformanceReport : create()
+PerformanceReport -> ReportViewScreen : display()
+
+Supervisor -> ReportViewScreen : clickExport()
+ReportViewScreen -> ExportDialog : open()
+ExportDialog -> ReportExportController : generate(PDF/CSV)
+ReportExportController -> Database : save()
+ReportExportController -> ReportMainScreen : backToList()
+
+== Εναλλακτικές ==
+alt no data
+    ReportCriteriaController -> Database : fetch()
+    Database --> ReportCriteriaController : empty
+    ReportCriteriaController -> ReportCriteriaForm : showWarning()
+end
+
+alt DB error
+    ReportGenerationController -> Database : fetch()
+    Database --> ReportGenerationController : error
+    ReportGenerationController -> ReportViewScreen : showError()
+end
+
+alt view past reports
+    Supervisor -> ReportMainScreen : clickHistory()
+    ReportMainScreen -> ReportHistoryController : loadHistory()
+    ReportHistoryController -> Database : getSaved()
+    Database --> ReportHistoryController : list
+    ReportHistoryController -> ReportMainScreen : display()
+    Supervisor -> ReportMainScreen : selectReport()
+    ReportMainScreen -> ReportViewScreen : showReport()
+end
+
+alt back to menu
+    Supervisor -> ReportViewScreen : clickBack()
+    ReportViewScreen -> Dashboard : return()
+end
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+title Use Case 6 – Απομακρυσμένη Εκκίνηση ή Απενεργοποίηση Ρομπότ (v0.1)
+
+actor Operator
+actor Supervisor
+participant Dashboard
+participant RobotListScreen
+participant RobotActionDialog
+participant ConfirmationDialog
+control AuthController
+control RobotSelectionController
+control ActionAvailabilityController
+control RobotCommandController
+control RobotStatusUpdater
+control LogController
+entity Robot
+database Database
+
+Operator -> Dashboard : login()
+Dashboard -> RobotListScreen : openRobotList()
+RobotListScreen -> RobotSelectionController : fetchRobots()
+RobotSelectionController -> Database : getRobots()
+Database --> RobotSelectionController : robotList
+RobotSelectionController -> RobotListScreen : display()
+
+Operator -> RobotListScreen : selectRobot()
+RobotListScreen -> ActionAvailabilityController : getAvailableActions()
+ActionAvailabilityController -> Robot : getStatus()
+ActionAvailabilityController -> RobotActionDialog : showActions()
+
+Operator -> RobotActionDialog : chooseAction()
+RobotActionDialog -> ConfirmationDialog : showConfirmation()
+Operator -> ConfirmationDialog : confirm()
+
+ConfirmationDialog -> AuthController : checkRights()
+alt has rights
+    AuthController -> RobotCommandController : sendCommand()
+    RobotCommandController -> Robot : execute(action)
+    Robot --> RobotCommandController : confirmSuccess()
+    RobotCommandController -> RobotStatusUpdater : updateStatus()
+    RobotStatusUpdater -> Database : updateState()
+    RobotStatusUpdater -> RobotListScreen : refreshList()
+    RobotListScreen -> Operator : successMessage()
+else no rights
+    AuthController -> RobotCommandController : deny()
+    RobotCommandController -> RobotActionDialog : showAccessDenied()
+    LogController -> Database : logAttempt()
+end
+
+== Εναλλακτικές ==
+alt robot no response
+    RobotCommandController -> Robot : execute()
+    RobotCommandController -> RobotActionDialog : showCommError()
+    RobotActionDialog -> Operator : notifyTechnician()
+end
+
+alt already in desired state
+    ActionAvailabilityController -> Robot : alreadyInState()
+    ActionAvailabilityController -> RobotActionDialog : showMessage()
+end
+
+alt robot busy
+    ActionAvailabilityController -> Robot : isBusy()
+    ActionAvailabilityController -> RobotActionDialog : showBusyWarning()
+end
+
+@enduml

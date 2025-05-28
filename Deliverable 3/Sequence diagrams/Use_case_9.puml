@@ -1,0 +1,62 @@
+@startuml
+title Use Case 9 – Διαχείριση Ρυθμίσεων Συστήματος (v0.1)
+
+actor Administrator
+participant Dashboard
+participant SettingsScreen
+participant UserListScreen
+participant UserCreationForm
+participant AccessRightsScreen
+participant SecuritySettingsScreen
+control SettingsAccessController
+control UserManagementController
+control AccessRightsController
+control SecuritySettingsController
+control ValidationController
+control LogController
+database Database
+entity User
+entity AccessPolicy
+
+Administrator -> Dashboard : login()
+Dashboard -> SettingsScreen : openSettings()
+SettingsScreen -> SettingsAccessController : chooseOption()
+SettingsAccessController -> UserListScreen : userManagement()
+
+Administrator -> UserListScreen : clickAddUser()
+UserListScreen -> UserManagementController : openForm()
+UserManagementController -> UserCreationForm : showForm()
+
+Administrator -> UserCreationForm : fillForm()
+UserCreationForm -> ValidationController : validate()
+alt valid
+    ValidationController -> UserManagementController : ok
+    UserManagementController -> Database : saveUser()
+    Database --> UserManagementController : success
+    UserManagementController -> UserListScreen : refreshList()
+else invalid
+    ValidationController -> UserCreationForm : showErrors()
+end
+
+== Εναλλακτική 1 ==
+UserManagementController -> Database : saveUser()
+Database --> UserManagementController : error
+UserManagementController -> UserCreationForm : showError()
+
+== Εναλλακτική 2 ==
+Administrator -> SettingsScreen : selectAccessRights()
+SettingsScreen -> AccessRightsScreen : open()
+AccessRightsScreen -> AccessRightsController : chooseUser()
+AccessRightsController -> AccessPolicy : update()
+AccessRightsController -> Database : savePolicy()
+Database --> AccessRightsController : success
+AccessRightsController -> AccessRightsScreen : notifyUser()
+
+== Εναλλακτική 3 ==
+Administrator -> SettingsScreen : selectSecuritySettings()
+SettingsScreen -> SecuritySettingsScreen : open()
+SecuritySettingsScreen -> SecuritySettingsController : updatePolicy()
+SecuritySettingsController -> Database : save()
+SecuritySettingsController -> LogController : notifyAllUsers()
+
+@enduml

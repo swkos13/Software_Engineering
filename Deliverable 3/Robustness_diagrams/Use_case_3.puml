@@ -1,0 +1,59 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Supervisor
+
+boundary Dashboard
+boundary TaskListScreen
+boundary TaskDetailsScreen
+boundary RobotSelectionScreen
+boundary ConfirmationScreen
+
+control TaskSelectionController
+control RobotAvailabilityController
+control AssignmentController
+control NavigationController
+
+entity Task
+entity Robot
+database Database
+
+' Βασική Ροή
+Supervisor --> Dashboard : login()
+Dashboard --> TaskListScreen : goToTasks()
+TaskListScreen --> TaskSelectionController : selectTask()
+TaskSelectionController --> Task : getDetails()
+TaskSelectionController --> Database : fetchTaskDetails()
+Database --> TaskSelectionController : taskInfo
+TaskSelectionController --> TaskDetailsScreen : showTaskDetails()
+
+Supervisor --> TaskDetailsScreen : clickAssign()
+TaskDetailsScreen --> RobotAvailabilityController : getAvailableRobots()
+RobotAvailabilityController --> Database : queryAvailable()
+RobotAvailabilityController --> Robot : checkStatus()
+Database --> RobotAvailabilityController : robotList
+RobotAvailabilityController --> RobotSelectionScreen : displayRobots()
+
+Supervisor --> RobotSelectionScreen : selectRobot()
+RobotSelectionScreen --> RobotAvailabilityController : checkAvailability()
+RobotAvailabilityController --> Robot : isCompatibleWith(Task)
+RobotAvailabilityController --> AssignmentController : assign()
+
+AssignmentController --> Task : linkToRobot()
+AssignmentController --> Robot : reserve()
+AssignmentController --> Database : saveAssignment()
+AssignmentController --> ConfirmationScreen : showSuccess()
+ConfirmationScreen --> Supervisor : notifyAssigned()
+NavigationController --> TaskListScreen : backToList()
+
+' Εναλλακτική 1 – Ρομπότ μη διαθέσιμο
+skinparam ArrowColor Red
+RobotAvailabilityController --> Robot : isUnavailable()
+RobotAvailabilityController --> RobotSelectionScreen : showError("Επιλέξτε άλλο ρομπότ")
+
+' Εναλλακτική 2 – Σφάλμα κατά την αποθήκευση
+AssignmentController --> Database : saveAssignment()
+Database --> AssignmentController : error()
+AssignmentController --> RobotSelectionScreen : showAssignmentError()
+@enduml

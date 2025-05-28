@@ -1,0 +1,65 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Supervisor
+actor Administrator
+
+boundary Dashboard
+boundary HistoryFilterScreen
+boundary HistoryResultsScreen
+boundary ExportDialog
+
+control HistoryAccessController
+control HistoryFilterController
+control HistoryRetrievalController
+control HistoryExportController
+
+entity Task
+entity Event
+database Database
+
+' Κοινή Ροή για Supervisor και Administrator
+Supervisor --> Dashboard : login()
+Administrator --> Dashboard : login()
+Dashboard --> HistoryFilterScreen : accessHistoryModule()
+
+HistoryFilterScreen --> HistoryAccessController : showFilterOptions()
+Supervisor --> HistoryFilterScreen : defineFilters()
+Administrator --> HistoryFilterScreen : defineFilters()
+
+HistoryFilterScreen --> HistoryFilterController : submitFilters()
+HistoryFilterController --> HistoryRetrievalController : fetchRawData()
+HistoryRetrievalController --> Database : query(Task, Event)
+Database --> HistoryRetrievalController : taskAndEventData
+HistoryRetrievalController --> HistoryFilterController : returnResults()
+HistoryFilterController --> HistoryResultsScreen : displayResults()
+
+' Εμπλοκή των οντοτήτων
+HistoryRetrievalController --> Task : collectData()
+HistoryRetrievalController --> Event : collectData()
+
+Supervisor --> HistoryResultsScreen : chooseExport()
+HistoryResultsScreen --> ExportDialog : showFormatOptions()
+Supervisor --> ExportDialog : selectFormatAndPath()
+ExportDialog --> HistoryExportController : exportToFile()
+HistoryExportController --> Database : fetchDataForExport()
+HistoryExportController --> FileSystem : saveFile()
+HistoryExportController --> HistoryResultsScreen : notifySuccess()
+
+' Εναλλακτική Ροή 1 – Δεν υπάρχουν δεδομένα
+skinparam ArrowColor Red
+Database --> HistoryRetrievalController : noData()
+HistoryRetrievalController --> HistoryFilterController : notifyEmpty()
+HistoryFilterController --> HistoryFilterScreen : showNoDataMessage()
+
+' Εναλλακτική Ροή 2 – Σφάλμα κατά την εξαγωγή
+HistoryExportController --> FileSystem : error()
+HistoryExportController --> ExportDialog : showExportError()
+
+' Εναλλακτική Ροή 3 – Μόνο προβολή
+Supervisor --> HistoryResultsScreen : onlyView()
+Administrator --> HistoryResultsScreen : onlyView()
+HistoryResultsScreen --> HistoryFilterController : enableSearchSort()
+
+@enduml

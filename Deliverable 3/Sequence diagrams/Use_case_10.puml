@@ -1,0 +1,55 @@
+@startuml
+title Use Case 10 – Εξαγωγή Ιστορικού Εργασιών και Συμβάντων (v0.1)
+
+actor Supervisor
+actor Administrator
+participant Dashboard
+participant HistoryFilterScreen
+participant HistoryResultsScreen
+participant ExportDialog
+control HistoryAccessController
+control HistoryFilterController
+control HistoryRetrievalController
+control HistoryExportController
+control LogController
+database Database
+entity Task
+entity Event
+
+Supervisor -> Dashboard : login()
+Dashboard -> HistoryFilterScreen : openHistory()
+
+HistoryFilterScreen -> HistoryAccessController : showFilters()
+Supervisor -> HistoryFilterScreen : setFilters()
+HistoryFilterScreen -> HistoryFilterController : submit()
+HistoryFilterController -> Database : fetchHistory()
+Database --> HistoryFilterController : results
+HistoryFilterController -> HistoryResultsScreen : showResults()
+
+Supervisor -> HistoryResultsScreen : exportData()
+HistoryResultsScreen -> ExportDialog : openExportOptions()
+Supervisor -> ExportDialog : selectFormat()
+ExportDialog -> HistoryExportController : generate()
+HistoryExportController -> Database : getData()
+HistoryExportController -> FileSystem : saveFile()
+FileSystem --> HistoryExportController : OK
+HistoryExportController -> HistoryResultsScreen : showSuccess()
+
+== Εναλλακτικές ==
+alt no data
+    HistoryFilterController -> Database : query()
+    Database --> HistoryFilterController : empty
+    HistoryFilterController -> HistoryFilterScreen : showWarning()
+end
+
+alt export error
+    HistoryExportController -> FileSystem : save()
+    FileSystem --> HistoryExportController : error
+    HistoryExportController -> ExportDialog : showError()
+end
+
+alt view only
+    Supervisor -> HistoryResultsScreen : viewOnly()
+    HistoryResultsScreen -> HistoryFilterController : allowSortAndSearch()
+end
+@enduml

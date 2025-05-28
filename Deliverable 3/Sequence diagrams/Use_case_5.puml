@@ -1,0 +1,64 @@
+@startuml
+title Use Case 5 – Δημιουργία Αναφοράς Σφαλμάτων Ρομπότ (v0.1)
+
+actor Operator
+actor Technician
+participant Dashboard
+participant FaultManagementScreen
+participant FaultReportForm
+participant ReportListScreen
+participant ReportDetailsScreen
+control AuthController
+control ReportFormController
+control ReportValidationController
+control ReportPersistenceController
+control ReportFilterController
+control LogController
+control NotificationController
+database Database
+entity Robot
+entity FaultReport
+
+Operator -> Dashboard : login()
+Dashboard -> FaultManagementScreen : openFaultManagement()
+
+== Υποβολή ==
+Operator -> FaultManagementScreen : clickSubmitReport()
+FaultManagementScreen -> ReportFormController : openForm()
+ReportFormController -> FaultReportForm : display()
+
+Operator -> FaultReportForm : fillInReport()
+FaultReportForm -> Robot : getSelected()
+FaultReportForm -> FaultReport : create()
+FaultReport -> ReportValidationController : validate()
+alt valid
+    ReportValidationController -> ReportPersistenceController : save()
+    ReportPersistenceController -> Database : insert(faultReport)
+    Database --> ReportPersistenceController : OK
+    ReportPersistenceController -> NotificationController : notifyTechnician()
+else invalid
+    ReportValidationController -> FaultReportForm : showError()
+end
+
+== Εναλλακτική: DB Error ==
+ReportPersistenceController -> Database : insert()
+Database --> ReportPersistenceController : error
+ReportPersistenceController -> FaultReportForm : showError()
+
+== Προβολή Αναφορών ==
+Operator -> FaultManagementScreen : clickViewReports()
+FaultManagementScreen -> ReportFilterController : getReports()
+ReportFilterController -> Database : queryAll()
+Database --> ReportFilterController : reportList
+ReportFilterController -> ReportListScreen : display()
+
+Operator -> ReportListScreen : filterByDate/Type/Robot()
+ReportListScreen -> ReportFilterController : applyFilters()
+ReportFilterController -> Database : filteredQuery()
+Database --> ReportFilterController : results
+ReportFilterController -> ReportListScreen : showFiltered()
+
+Operator -> ReportListScreen : selectReport()
+ReportListScreen -> ReportDetailsScreen : showReport()
+
+@enduml

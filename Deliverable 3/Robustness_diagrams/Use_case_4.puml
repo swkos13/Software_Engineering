@@ -1,0 +1,86 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Technician
+actor Supervisor
+
+boundary Dashboard
+boundary NotificationIcon
+boundary NotificationListScreen
+boundary NotificationDetailsScreen
+
+control NotificationChecker
+control NotificationAccessController
+control NotificationLoader
+control NotificationStatusController
+control LogController
+
+entity Notification
+entity Robot
+database Database
+
+' Βασική Ροή – Τεχνικός Συντήρησης
+Technician --> Dashboard : login()
+Dashboard --> NotificationChecker : checkForNotifications()
+NotificationChecker --> Database : queryActiveNotifications()
+Database --> NotificationChecker : notificationExists
+NotificationChecker --> NotificationIcon : showIcon()
+
+Technician --> NotificationIcon : click()
+NotificationIcon --> NotificationAccessController : checkPermissions()
+NotificationAccessController --> NotificationLoader : fetchList()
+NotificationLoader --> Database : getAllNotifications()
+Database --> NotificationLoader : returnList()
+NotificationLoader --> NotificationListScreen : displayList()
+
+Technician --> NotificationListScreen : selectNotification()
+NotificationListScreen --> NotificationLoader : getDetails(notificationId)
+NotificationLoader --> Notification : getDetails()
+Notification --> Robot : relatedTo()
+NotificationLoader --> NotificationDetailsScreen : display(notification, robot)
+
+Technician --> NotificationDetailsScreen : markAsRead()
+NotificationDetailsScreen --> NotificationStatusController : updateStatus()
+NotificationStatusController --> Notification : setStatusRead()
+NotificationStatusController --> Database : updateStatus()
+
+' Εμπλοκή Supervisor με πλήρη ίδια ροή
+Supervisor --> NotificationIcon : click()
+NotificationIcon --> NotificationAccessController : checkPermissions()
+NotificationAccessController --> NotificationLoader : fetchList()
+NotificationLoader --> Database : getAllNotifications()
+Database --> NotificationLoader : returnList()
+NotificationLoader --> NotificationListScreen : displayList()
+Supervisor --> NotificationListScreen : selectNotification()
+NotificationListScreen --> NotificationLoader : getDetails(notificationId)
+NotificationLoader --> Notification : getDetails()
+Notification --> Robot : relatedTo()
+NotificationLoader --> NotificationDetailsScreen : display(notification, robot)
+
+Supervisor --> NotificationDetailsScreen : markAsRead()
+NotificationDetailsScreen --> NotificationStatusController : updateStatus()
+NotificationStatusController --> Notification : setStatusRead()
+NotificationStatusController --> Database : updateStatus()
+
+' Εναλλακτική 1 – Καμία ειδοποίηση
+skinparam ArrowColor Red
+NotificationChecker --> NotificationIcon : noNotifications()
+NotificationIcon --> Technician : showMessage("Δεν υπάρχουν ειδοποιήσεις")
+
+' Εναλλακτική 2 – Αποτυχία ανάκτησης
+NotificationLoader --> Database : getAllNotifications()
+Database --> NotificationLoader : error()
+NotificationLoader --> NotificationListScreen : showError()
+NotificationListScreen --> NotificationLoader : retry()
+NotificationLoader --> Database : retryQuery()
+Database --> NotificationLoader : stillError()
+NotificationLoader --> LogController : logEvent()
+LogController --> Admin : notifyIssue()
+
+' Εναλλακτική 3 – Μη εξουσιοδοτημένη πρόσβαση
+NotificationAccessController --> NotificationIcon : denyAccess()
+NotificationIcon --> Technician : accessDenied()
+NotificationAccessController --> LogController : logUnauthorizedAttempt()
+LogController --> Admin : notifySecurity()
+@enduml

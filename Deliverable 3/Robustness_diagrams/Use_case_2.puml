@@ -1,0 +1,51 @@
+@startuml
+' Robustness Diagram – Use Case 1: Παρακολούθηση Κατάστασης Ρομπότ σε Πραγματικό Χρόνο
+top to bottom direction
+
+actor User as "Χρήστης"
+
+' === BOUNDARY OBJECTS ===
+boundary "Οθόνη Παρακολούθησης Ρομπότ" as UI_Monitoring
+boundary "Οθόνη Αποτελεσμάτων Ρομπότ" as UI_Results
+boundary "Οθόνη Λεπτομεριών Ρομπότ" as UI_Details
+boundary "Οθόνη Αποτελεσμάτων Διαγνωστικού Ελέγχου" as UI_Diagnostics
+boundary "Μήνυμα Σφάλματος" as UI_Error
+
+' === CONTROL OBJECTS ===
+control "Ελεγκτής Παρακολούθησης Ρομπότ" as Ctrl_Monitor
+control "Εμφανίζω στοιχεία παρακολούθησης" as Ctrl_Present
+control "Εμφανίζω τα στοιχεία του Ρομπότ" as Ctrl_Info
+control "Ελεγκτής Διάγνωσης" as Ctrl_Diag
+control "Ελεγκτής Διαθεσιμότητας" as Ctrl_avail
+control "Εμφάνιση" as Ctrl_show #red
+
+' === ENTITY OBJECTS ===
+entity "ROS" as Ent_ROS
+
+' === ΚΥΡΙΑ ΡΟΗ ===
+User -- UI_Monitoring : επιλέγει απο το dashboard
+UI_Monitoring -- Ctrl_Monitor
+Ctrl_Monitor -- Ctrl_Present
+Ctrl_Present -- UI_Results
+Ent_ROS -- Ctrl_Monitor
+User -- UI_Results : επιλέγει ρομπότ
+UI_Results -- Ctrl_Info
+Ctrl_Info -- UI_Details
+User -- UI_Diagnostics : επιβλέπει
+UI_Diagnostics -- Ctrl_Diag
+User -- UI_Details : επιλέγει διαγνωστικό έλεγχο
+Ent_ROS -- Ctrl_Diag
+UI_Details -- Ctrl_avail
+Ctrl_avail -- Ctrl_Diag
+
+
+
+' === ΕΝΑΛΛΑΚΤΙΚΕΣ ΡΟΕΣ ===
+' -- Μη εξουσιοδοτημένος χρήστης --
+Ctrl_Present -- Ctrl_show  #red
+Ctrl_show -- UI_Error #red
+
+' -- Το ρομπότ είναι απασχολημένο --
+Ctrl_avail -- Ctrl_show  #red
+
+@enduml

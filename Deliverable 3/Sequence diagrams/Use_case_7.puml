@@ -1,0 +1,56 @@
+@startuml
+title Use Case 7 – Ενημέρωση Κατάστασης Ρομπότ από Τεχνικό Συντήρησης (v0.1)
+
+actor Technician
+participant Dashboard
+participant RobotListScreen
+participant RobotDetailsScreen
+participant StatusUpdateDialog
+control RobotListController
+control RobotStatusAccessController
+control RobotStatusUpdateController
+control RobotValidationController
+control LogController
+entity Robot
+database Database
+
+Technician -> Dashboard : login()
+Dashboard -> RobotListScreen : openRobotList()
+RobotListScreen -> RobotListController : getAllRobots()
+RobotListController -> Database : fetch()
+Database --> RobotListController : robotList
+RobotListController -> RobotListScreen : display()
+
+Technician -> RobotListScreen : applyFilter()
+RobotListScreen -> RobotListController : filter()
+RobotListController -> RobotListScreen : filteredList()
+
+Technician -> RobotListScreen : selectRobot()
+RobotListScreen -> RobotStatusAccessController : getDetails()
+RobotStatusAccessController -> Robot : getState()
+Robot -> RobotStatusAccessController : state
+RobotStatusAccessController -> RobotDetailsScreen : showDetails()
+
+Technician -> RobotDetailsScreen : updateStatus()
+RobotDetailsScreen -> StatusUpdateDialog : showOptions()
+Technician -> StatusUpdateDialog : selectStatus(comment)
+StatusUpdateDialog -> RobotValidationController : validate()
+alt valid
+    RobotValidationController -> RobotStatusUpdateController : proceed()
+    RobotStatusUpdateController -> Robot : updateState()
+    Robot -> RobotStatusUpdateController : updated
+    RobotStatusUpdateController -> Database : persist()
+    Database --> RobotStatusUpdateController : OK
+    RobotStatusUpdateController -> RobotListScreen : refresh()
+else update failed
+    RobotStatusUpdateController -> Database : persist()
+    Database --> RobotStatusUpdateController : error
+    RobotStatusUpdateController -> StatusUpdateDialog : showError()
+end
+
+alt robot unavailable
+    RobotStatusAccessController -> Robot : isUnavailable()
+    RobotStatusAccessController -> RobotDetailsScreen : showError()
+    LogController -> Database : log()
+end
+@enduml

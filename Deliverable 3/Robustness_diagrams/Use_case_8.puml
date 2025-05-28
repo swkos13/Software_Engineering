@@ -1,0 +1,64 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Supervisor
+
+boundary Dashboard
+boundary ReportMainScreen
+boundary ReportCriteriaForm
+boundary ReportViewScreen
+boundary ExportDialog
+
+control ReportAccessController
+control ReportCriteriaController
+control ReportGenerationController
+control ReportExportController
+control ReportHistoryController
+
+entity PerformanceReport
+database Database
+
+' Βασική Ροή – Δημιουργία νέας αναφοράς
+Supervisor --> Dashboard : login()
+Dashboard --> ReportMainScreen : accessPerformanceReports()
+ReportMainScreen --> ReportAccessController : showOptions()
+ReportAccessController --> ReportCriteriaForm : showNewReportForm()
+
+Supervisor --> ReportCriteriaForm : fillInCriteria()
+ReportCriteriaForm --> ReportCriteriaController : submitCriteria()
+ReportCriteriaController --> Database : queryPerformanceData()
+Database --> ReportCriteriaController : returnData()
+ReportCriteriaController --> ReportGenerationController : processData()
+ReportGenerationController --> PerformanceReport : create()
+PerformanceReport --> ReportViewScreen : displayResults()
+
+Supervisor --> ReportViewScreen : selectExport()
+ReportViewScreen --> ExportDialog : chooseFormat(PDF/CSV)
+ExportDialog --> ReportExportController : generateFile()
+ReportExportController --> Database : saveReport()
+ReportExportController --> ReportMainScreen : returnToList()
+
+' Εναλλακτική Ροή 1 – Δεν υπάρχουν δεδομένα
+skinparam ArrowColor Red
+ReportCriteriaController --> Database : queryPerformanceData()
+Database --> ReportCriteriaController : noData()
+ReportCriteriaController --> ReportCriteriaForm : showNoDataWarning()
+
+' Εναλλακτική Ροή 2 – Σφάλμα δημιουργίας αναφοράς
+ReportGenerationController --> Database : error()
+ReportGenerationController --> ReportViewScreen : showError()
+
+' Εναλλακτική Ροή 3 – Προβολή προηγούμενων αναφορών
+Supervisor --> ReportMainScreen : viewPastReports()
+ReportMainScreen --> ReportHistoryController : loadHistory()
+ReportHistoryController --> Database : getSavedReports()
+Database --> ReportHistoryController : returnList()
+ReportHistoryController --> ReportMainScreen : displayHistory()
+Supervisor --> ReportMainScreen : selectReport()
+ReportMainScreen --> ReportViewScreen : displayReport()
+
+' Εναλλακτική Ροή 4 – Επιστροφή στο dashboard
+ReportViewScreen --> Dashboard : backToMenu()
+
+@enduml

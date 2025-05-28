@@ -1,0 +1,38 @@
+@startuml
+title Use Case 2 - Προγραμματισμός Νέας Εργασίας στο Σύστημα (v0.1)
+
+actor Supervisor
+participant TaskManagementScreen
+participant TaskCreationForm
+participant TaskListScreen
+control AuthController
+control TaskFormController
+control TaskValidationController
+control TaskSaveController
+control NavigationController
+control TaskListController
+entity Task
+database Database
+
+Supervisor -> TaskManagementScreen : access()
+TaskManagementScreen -> AuthController : checkPermissions()
+AuthController --> TaskFormController : allowCreate()
+
+Supervisor -> TaskFormController : selectCreate()
+TaskFormController -> TaskCreationForm : showForm()
+
+Supervisor -> TaskCreationForm : submitData()
+TaskCreationForm -> TaskValidationController : validate()
+
+alt valid
+    TaskValidationController -> TaskSaveController : saveTask()
+    TaskSaveController -> Database : insert(task)
+    Database --> TaskSaveController : OK
+    TaskSaveController -> NavigationController : goToList()
+    NavigationController -> TaskListScreen : showSuccess()
+else invalid
+    TaskValidationController --> TaskFormController : returnErrors()
+    TaskFormController -> TaskCreationForm : displayValidationError()
+end
+
+@enduml

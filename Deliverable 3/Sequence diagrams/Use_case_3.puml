@@ -1,0 +1,48 @@
+@startuml
+title Use Case 3 - Ανάθεση Εργασίας σε Συγκεκριμένο Ρομπότ (v0.1)
+
+actor Supervisor
+participant Dashboard
+participant TaskListScreen
+participant TaskDetailsScreen
+participant RobotSelectionScreen
+participant ConfirmationScreen
+control AuthController
+control TaskSelectionController
+control RobotAvailabilityController
+control AssignmentController
+control NavigationController
+database Database
+
+Supervisor -> Dashboard : login()
+Dashboard -> TaskListScreen : open()
+TaskListScreen -> TaskSelectionController : selectTask(taskId)
+TaskSelectionController -> Database : fetchTask(taskId)
+Database --> TaskSelectionController : taskData
+TaskSelectionController -> TaskDetailsScreen : showTask(taskData)
+
+Supervisor -> TaskDetailsScreen : assignToRobot()
+TaskDetailsScreen -> RobotAvailabilityController : getAvailable()
+RobotAvailabilityController -> Database : queryAvailableRobots()
+Database --> RobotAvailabilityController : robotList
+RobotAvailabilityController -> RobotSelectionScreen : display(robotList)
+
+Supervisor -> RobotSelectionScreen : select(robotId)
+RobotSelectionScreen -> RobotAvailabilityController : checkStatus(robotId)
+alt robot OK
+    RobotAvailabilityController -> AssignmentController : assign()
+    AssignmentController -> Database : saveAssignment()
+    Database --> AssignmentController : success
+    AssignmentController -> ConfirmationScreen : notify()
+    ConfirmationScreen -> Supervisor : assignmentSuccess()
+    NavigationController -> TaskListScreen : back()
+else robot NOT available
+    RobotAvailabilityController -> RobotSelectionScreen : showError()
+end
+
+alt DB error
+    AssignmentController -> Database : saveAssignment()
+    Database --> AssignmentController : error
+    AssignmentController -> RobotSelectionScreen : showAssignmentError()
+end
+@enduml

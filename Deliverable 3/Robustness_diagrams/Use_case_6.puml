@@ -1,0 +1,67 @@
+@startuml
+top to bottom direction
+skinparam ArrowColor Black
+
+actor Operator
+
+boundary Dashboard
+boundary RobotListScreen
+boundary RobotActionDialog
+boundary ConfirmationDialog
+
+control AuthController
+control RobotSelectionController
+control ActionAvailabilityController
+control RobotCommandController
+control RobotStatusUpdater
+control LogController
+
+entity Robot
+entity Notification
+database Database
+
+' Βασική Ροή – Απομακρυσμένος έλεγχος
+Operator --> Dashboard : login()
+Dashboard --> RobotListScreen : selectRobotManagement()
+RobotListScreen --> RobotSelectionController : fetchRobots()
+RobotSelectionController --> Database : getRobotStatus()
+Database --> RobotSelectionController : robotList
+RobotSelectionController --> RobotListScreen : displayRobots()
+
+Operator --> RobotListScreen : selectRobot()
+RobotListScreen --> ActionAvailabilityController : checkAvailableActions()
+ActionAvailabilityController --> Robot : getStatus()
+ActionAvailabilityController --> RobotActionDialog : showOptions()
+
+Operator --> RobotActionDialog : chooseAction()
+RobotActionDialog --> ConfirmationDialog : showWarning()
+Operator --> ConfirmationDialog : confirmAction()
+ConfirmationDialog --> AuthController : checkUserRights()
+AuthController --> RobotCommandController : proceed()
+
+RobotCommandController --> Robot : sendCommand()
+Robot --> RobotCommandController : confirmExecution()
+RobotCommandController --> RobotStatusUpdater : updateStatus()
+RobotStatusUpdater --> Database : updateRobotState()
+RobotStatusUpdater --> RobotListScreen : refresh()
+RobotListScreen --> Operator : showSuccess()
+
+' Εναλλακτική Ροή 1 – Ρομπότ δεν ανταποκρίνεται
+skinparam ArrowColor Red
+RobotCommandController --> Robot : noResponse()
+RobotCommandController --> RobotActionDialog : showCommError()
+Operator --> Notification : notifyTechnician()
+
+' Εναλλακτική Ροή 2 – Ήδη στην κατάσταση
+ActionAvailabilityController --> Robot : alreadyInState()
+ActionAvailabilityController --> RobotActionDialog : showMessage("Ήδη σε αυτήν την κατάσταση")
+
+' Εναλλακτική Ροή 3 – Μη εξουσιοδοτημένος χρήστης
+AuthController --> RobotCommandController : deny()
+RobotCommandController --> RobotActionDialog : showAccessDenied()
+LogController --> Database : logUnauthorizedAttempt()
+
+' Εναλλακτική Ροή 4 – Εκτελεί εργασία
+ActionAvailabilityController --> Robot : isBusy()
+ActionAvailabilityController --> RobotActionDialog : showWarning("Ρομπότ εκτελεί διεργασία")
+@enduml

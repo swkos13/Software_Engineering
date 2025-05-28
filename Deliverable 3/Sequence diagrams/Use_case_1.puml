@@ -1,0 +1,43 @@
+@startuml UC1
+
+actor Χρήστης
+boundary GUI
+control RobotStatusController
+entity RobotManager
+entity ROSInterface
+
+== Σύνδεση & Dashboard ==
+Χρήστης -> GUI : login()
+GUI -> Χρήστης : displayDashboard()
+
+== Επιλογή Παρακολούθησης Ρομπότ ==
+Χρήστης -> GUI : επιλέγει "Παρακολούθηση Κατάστασης Ρομπότ"
+GUI -> RobotStatusController : openStatusMonitorView()
+RobotStatusController -> RobotManager : fetchAllRobotStatus()
+RobotManager -> ROSInterface : getStatus(robotList)
+ROSInterface --> RobotManager : statusData[]
+RobotManager --> RobotStatusController : statusData[]
+RobotStatusController -> GUI : renderRobotList(statusData[])
+
+== Επιλογή Συγκεκριμένου Ρομπότ ==
+Χρήστης -> GUI : επιλέγει ρομπότ
+GUI -> RobotStatusController : showDetails(robotId)
+RobotStatusController -> RobotManager : getRobotDetails(robotId)
+RobotManager -> ROSInterface : getDetails(robotId)
+ROSInterface --> RobotManager : robotDetails
+RobotManager --> RobotStatusContr`oller : robotDetails
+RobotStatusController -> GUI : displayRobotInfo(robotDetails)
+
+== Έλεγχος Υγείας Ρομπότ ==
+Χρήστης -> GUI : επιλέγει "Διάγνωση"
+GUI -> RobotStatusController : diagnose(robotId)
+RobotStatusController -> ROSInterface : runDiagnostics(robotId)
+ROSInterface --> RobotStatusController : diagnosticsReport
+RobotStatusController -> GUI : displayDiagnostics(diagnosticsReport)
+
+== Δημιουργία Αναφοράς Σφαλμάτων ==
+note right of Χρήστης
+(Μεταφορά στο Use Case 5)
+end note
+
+@enduml

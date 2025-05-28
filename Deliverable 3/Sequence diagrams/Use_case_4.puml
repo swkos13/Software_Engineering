@@ -1,0 +1,61 @@
+@startuml
+title Use Case 4 – Λήψη και Εμφάνιση Ειδοποιήσεων Συντήρησης (v0.1)
+
+actor Technician
+actor Supervisor
+participant Dashboard
+participant NotificationIcon
+participant NotificationListScreen
+participant NotificationDetailsScreen
+control NotificationChecker
+control NotificationAccessController
+control NotificationLoader
+control NotificationStatusController
+control LogController
+database Database
+entity Notification
+entity Robot
+
+Technician -> Dashboard : login()
+Dashboard -> NotificationChecker : checkForNotifications()
+NotificationChecker -> Database : queryNotifications()
+Database --> NotificationChecker : notificationExists
+NotificationChecker -> NotificationIcon : showIcon()
+
+Technician -> NotificationIcon : click()
+NotificationIcon -> NotificationAccessController : checkPermissions()
+NotificationAccessController -> NotificationLoader : fetchNotifications()
+NotificationLoader -> Database : getAll()
+Database --> NotificationLoader : notificationList
+NotificationLoader -> NotificationListScreen : display()
+
+Technician -> NotificationListScreen : selectNotification()
+NotificationListScreen -> NotificationLoader : getDetails(notificationId)
+NotificationLoader -> Notification : read(notificationId)
+Notification --> NotificationLoader : details, robotId
+NotificationLoader -> NotificationDetailsScreen : showDetails()
+
+Technician -> NotificationDetailsScreen : markAsRead()
+NotificationDetailsScreen -> NotificationStatusController : update()
+NotificationStatusController -> Database : updateStatus()
+
+== Εναλλακτική 1 ==
+NotificationChecker -> NotificationIcon : noNew()
+NotificationIcon -> Technician : show("Δεν υπάρχουν ειδοποιήσεις")
+
+== Εναλλακτική 2 ==
+NotificationLoader -> Database : getAll()
+Database --> NotificationLoader : error
+NotificationLoader -> NotificationListScreen : showError()
+NotificationListScreen -> NotificationLoader : retry()
+NotificationLoader -> Database : retryQuery()
+Database --> NotificationLoader : error
+NotificationLoader -> LogController : logIssue()
+LogController -> Admin : alert()
+
+== Εναλλακτική 3 ==
+NotificationAccessController -> NotificationIcon : denyAccess()
+NotificationIcon -> Technician : accessDenied()
+NotificationAccessController -> LogController : logAttempt()
+LogController -> Admin : alert()
+@enduml
