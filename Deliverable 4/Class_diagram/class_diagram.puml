@@ -1,0 +1,301 @@
+@startuml
+
+title RobotHandle – Class Diagram v1.0
+skinparam classAttributeIconSize 0
+
+' === Κλάσεις Χρηστών ===
+class User {
+  - id: String
+  - username: String
+  - email: String
+  - password: String
+  - role: Role
+  - lastLogin: DateTime
+  + login(password: String): Boolean
+  + logout(): void
+  + updateProfile(data: Map<String, String>): void
+  + changePassword(oldPwd: String, newPwd: String): Boolean
+}
+
+class Role {
+  - name: String
+  - permissions: List<Permission>
+  + addPermission(permission: Permission): void
+  + removePermission(permission: Permission): void
+  + listPermissions(): List<Permission>
+}
+
+class Permission {
+  - code: String
+  - description: String
+  + isGrantedTo(role: Role): Boolean
+}
+
+class SessionManager {
+  + createSession(userId: String): String
+  + destroySession(userId: String): Boolean
+  + validateSession(token: String): Boolean
+}
+
+class AccessControl {
+  + checkPermission(user: User, action: String): Boolean
+  + getRole(user: User): Role
+}
+
+' === Κλάσεις Ρομπότ ===
+class Robot {
+  - id: String
+  - name: String
+  - type: String
+  - location: String
+  - batteryLevel: Float
+  - status: RobotStatus
+  - firmwareVersion: String
+  + updateStatus(newStatus: RobotStatus): void
+  + sendCommand(cmd: String): Boolean
+  + getDiagnostics(): RobotDiagnostics
+  + isAvailable(): Boolean
+}
+
+enum RobotStatus {
+  Λειτουργικό
+  ΣεΔιάγνωση
+  ΕκτόςΛειτουργίας
+}
+
+class RobotDiagnostics {
+  - robotId: String
+  - motorCurrent: Float
+  - temperature: Float
+  - sensorHealth: Map<String, Boolean>
+  - networkDelay: Float
+  - diagnosticTimestamp: DateTime
+  + analyze(): Map<String, String>
+  + generateReport(): String
+}
+
+class RobotController {
+  + reboot(robot: Robot): Boolean
+  + shutdown(robot: Robot): Boolean
+  + start(robot: Robot): Boolean
+  + sendBatchCommands(robot: Robot, cmds: List<String>): Boolean
+}
+
+class RobotRegistry {
+  - robots: List<Robot>
+  + getAllRobots(): List<Robot>
+  + getRobotById(id: String): Robot
+  + registerRobot(robot: Robot): void
+  + removeRobot(id: String): Boolean
+}
+
+' === Κλάσεις Εργασιών ===
+class Task {
+  - id: String
+  - description: String
+  - category: TaskCategory
+  - createdBy: User
+  - createdAt: DateTime
+  - deadline: DateTime
+  - status: TaskStatus
+  - notes: String
+  + assignTo(robot: Robot): Boolean
+  + updateDetails(data: Map<String, String>): Boolean
+  + markAsCompleted(): void
+}
+
+enum TaskCategory {
+  Μεταφορά
+  Επανατοποθέτηση
+  Έλεγχος
+  Καθαρισμός
+}
+
+enum TaskStatus {
+  Αναμονή
+  ΣεΕκτέλεση
+  Ολοκληρωμένη
+}
+
+class TaskAssignment {
+  - id: String
+  - task: Task
+  - robot: Robot
+  - assignedAt: DateTime
+  - status: String
+  + confirm(): Boolean
+  + cancel(): Boolean
+  + reschedule(newTime: DateTime): Boolean
+}
+
+class TaskScheduler {
+  + schedule(task: Task): Boolean
+  + cancel(taskId: String): Boolean
+  + getScheduledTasks(): List<Task>
+}
+
+' === Κλάσεις Αναφορών & Σφαλμάτων ===
+class ErrorReport {
+  - id: String
+  - robot: Robot
+  - type: ErrorType
+  - description: String
+  - submittedBy: User
+  - createdAt: DateTime
+  - attachments: List<File>
+  - status: String
+  + validate(): Boolean
+  + send(): Boolean
+  + updateStatus(status: String): void
+}
+
+enum ErrorType {
+  Κίνηση
+  Επικοινωνία
+  Θερμοκρασία
+  Άλλο
+}
+
+class MaintenanceAlert {
+  - id: String
+  - robot: Robot
+  - alertType: String
+  - message: String
+  - status: AlertStatus
+  - createdAt: DateTime
+  + markAsRead(): Boolean
+  + resolve(): Boolean
+}
+
+enum AlertStatus {
+  Νέα
+  Διαβασμένη
+  Επιλυμένη
+}
+
+class StatusUpdateLog {
+  - id: String
+  - robot: Robot
+  - previousStatus: RobotStatus
+  - newStatus: RobotStatus
+  - updatedBy: User
+  - timestamp: DateTime
+  + toString(): String
+}
+
+' === Κλάσεις Αναφορών Απόδοσης ===
+class PerformanceReport {
+  - id: String
+  - createdBy: User
+  - periodStart: DateTime
+  - periodEnd: DateTime
+  - metrics: Map<String, Float>
+  + exportPDF(): File
+  + exportCSV(): File
+  + summarize(): String
+}
+
+class ReportGenerator {
+  + generatePerformanceReport(): PerformanceReport
+  + generateErrorSummary(): String
+}
+
+class DataAnalytics {
+  + computeUptime(robot: Robot): Float
+  + computeEfficiency(robot: Robot): Float
+  + aggregateMetrics(): Map<String, Float>
+}
+
+' === Κλάσεις Ιστορικού & Εξαγωγών ===
+class HistoryQuery {
+  - filters: Map<String, String>
+  - user: User
+  + search(): List<String>
+  + exportCSV(): File
+}
+
+class ExportFile {
+  - filename: String
+  - format: String
+  - generatedAt: DateTime
+  - data: Binary
+  + getSize(): Int
+  + isValid(): Boolean
+}
+
+' === Κλάσεις Επικοινωνίας ===
+class Notification {
+  - id: String
+  - recipient: User
+  - message: String
+  - type: NotificationType
+  - read: Boolean
+  - createdAt: DateTime
+  + markAsRead(): Boolean
+  + isUrgent(): Boolean
+}
+
+enum NotificationType {
+  Συντήρηση
+  Ειδοποίηση
+  Σφάλμα
+}
+
+class Message {
+  - id: String
+  - sender: User
+  - recipient: User
+  - content: String
+  - timestamp: DateTime
+  + send(): Boolean
+  + reply(text: String): Message
+}
+
+' === Κλάσεις Διαχείρισης Συστήματος ===
+class SystemSettings {
+  - id: String
+  - doubleAuthEnabled: Boolean
+  - passwordPolicy: String
+  - lastUpdated: DateTime
+  + updateSettings(config: Map<String, String>): Boolean
+  + resetToDefaults(): Boolean
+}
+
+class AuditLog {
+  - id: String
+  - action: String
+  - user: User
+  - timestamp: DateTime
+  - success: Boolean
+  + toJson(): String
+}
+
+class LogManager {
+  + write(entry: AuditLog): void
+  + retrieveLogs(filter: String): List<AuditLog>
+  + purgeOldLogs(): Int
+}
+
+' === Σχέσεις ===
+User --> Role
+Role o-- Permission
+User --> Task : creates
+User --> ErrorReport : submits
+User --> Message : sends
+User --> PerformanceReport : generates
+User --> HistoryQuery : executes
+Robot *-- RobotDiagnostics
+Robot --> StatusUpdateLog
+Task o-- TaskAssignment
+TaskAssignment --> Robot
+ErrorReport --> Robot
+MaintenanceAlert --> Robot
+PerformanceReport --> Robot
+HistoryQuery --> ExportFile
+Task --> TaskStatus
+Notification --> User
+SessionManager --> User
+AccessControl --> Permission
+RobotController --> Robot
+AuditLog --> User
+@enduml
