@@ -1,0 +1,114 @@
+@startuml
+
+title RobotHandle – Domain Model v1.0
+skinparam classAttributeIconSize 0
+
+' === Κλάσεις Χρηστών ===
+class User {
+
+}
+
+class Role {
+}
+
+class Permission {
+}
+
+class SessionManager {
+}
+
+class AccessControl {
+}
+
+' === Κλάσεις Ρομπότ ===
+class Robot {
+}
+
+
+
+class RobotDiagnostics {
+}
+
+class RobotController {
+}
+
+class RobotRegistry {
+}
+
+' === Κλάσεις Εργασιών ===
+class Task {
+}
+
+class TaskAssignment {
+}
+
+class TaskScheduler {
+}
+
+' === Κλάσεις Αναφορών & Σφαλμάτων ===
+class ErrorReport {
+}
+
+class MaintenanceAlert {
+}
+
+class StatusUpdateLog {
+}
+
+' === Κλάσεις Αναφορών Απόδοσης ===
+class PerformanceReport {
+}
+
+class ReportGenerator {
+}
+
+class DataAnalytics {
+}
+
+' === Κλάσεις Ιστορικού & Εξαγωγών ===
+class HistoryQuery {
+}
+
+class ExportFile {
+}
+
+' === Κλάσεις Επικοινωνίας ===
+class Notification {
+}
+
+class Message {
+}
+
+' === Κλάσεις Διαχείρισης Συστήματος ===
+class SystemSettings {
+}
+
+class AuditLog {
+}
+
+class LogManager {
+}
+
+' === Σχέσεις ===
+User --> Role
+Role o-- Permission
+User --> Task : creates
+User --> ErrorReport : submits
+User --> Message : sends
+User --> PerformanceReport : generates
+User --> HistoryQuery : executes
+Robot *-- RobotDiagnostics
+Robot --> StatusUpdateLog
+Task o-- TaskAssignment
+TaskAssignment --> Robot
+ErrorReport --> Robot
+MaintenanceAlert --> Robot
+PerformanceReport --> Robot
+HistoryQuery --> ExportFile
+Task --> TaskStatus
+Notification --> User
+SessionManager --> User
+AccessControl --> Permission
+RobotController --> Robot
+AuditLog --> User
+@enduml
