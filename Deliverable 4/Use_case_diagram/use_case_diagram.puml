@@ -1,0 +1,79 @@
+@startuml
+title SmartRobotOps – Use Case Diagram v1.1 (με include / extend)
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Χειριστής\n(Operator)" as Operator
+actor "Επιβλέπων Παραγωγής\n(Factory Supervisor)" as Supervisor
+actor "Τεχνικός Συντήρησης\n(Maintenance Technician)" as Technician
+actor "Διαχειριστής Συστήματος\n(System Administrator)" as Admin
+
+' ==== Packages ====
+package "Διαχείριση Ρομπότ" {
+  usecase "UC1: Παρακολούθηση\nΚατάστασης Ρομπότ" as UC1
+  usecase "UC6: Εκκίνηση/Απενεργοποίηση\nΡομπότ" as UC6
+  usecase "UC7: Ενημέρωση Κατάστασης\nΡομπότ" as UC7
+  usecase "UC1.1: Έλεγχος Υγείας Ρομπότ" as UC1_Health
+  usecase "UC1.2: Σφάλμα Επικοινωνίας\nΡομπότ" as UC1_CommFail
+  usecase "UC6.1: Ρομπότ Ήδη σε Κατάσταση" as UC6_AlreadyState
+  usecase "UC6.2: Ρομπότ Απασχολημένο" as UC6_Busy
+}
+
+package "Διαχείριση Εργασιών" {
+  usecase "UC2: Δημιουργία Νέας Εργασίας" as UC2
+  usecase "UC3: Ανάθεση Εργασίας\nσε Ρομπότ" as UC3
+  usecase "UC2.1: Προβολή Εργασιών" as UC2_View
+  usecase "UC2.2: Ανάθεση από Προβολή" as UC2_AssignFromList
+}
+
+package "Σφάλματα & Συντήρηση" {
+  usecase "UC4: Λήψη Ειδοποιήσεων\nΣυντήρησης" as UC4
+  usecase "UC5: Δημιουργία Αναφοράς\nΣφαλμάτων" as UC5
+  usecase "UC5.1: Προβολή Αναφορών" as UC5_View
+}
+
+package "Αναφορές & Ιστορικό" {
+  usecase "UC8: Παραγωγή Αναφοράς\nΑπόδοσης" as UC8
+  usecase "UC10: Εξαγωγή Ιστορικού\nΕργασιών & Συμβάντων" as UC10
+  usecase "UC10.1: Προβολή Ιστορικού" as UC10_View
+}
+
+package "Διαχείριση Συστήματος" {
+  usecase "UC9: Διαχείριση\nΑσφαλείας & Δικαιωμάτων" as UC9
+  usecase "UC9.1: Επεξεργασία Δικαιωμάτων" as UC9_Permissions
+  usecase "UC9.2: Ρυθμίσεις Ασφαλείας" as UC9_Security
+}
+
+' ==== Actors με Use Cases ====
+Operator --> UC1
+Operator --> UC6
+Operator --> UC5
+Operator --> UC2_View
+Supervisor --> UC1
+Supervisor --> UC2
+Supervisor --> UC3
+Supervisor --> UC4
+Supervisor --> UC5
+Supervisor --> UC6
+Supervisor --> UC8
+Supervisor --> UC10
+Technician --> UC4
+Technician --> UC5
+Technician --> UC7
+Admin --> UC9
+Admin --> UC10
+
+' ==== Include / Extend Relationships ====
+UC1 ..> UC1_Health : <<include>>
+UC1 ..> UC1_CommFail : <<extend>>
+UC6 ..> UC6_AlreadyState : <<extend>>
+UC6 ..> UC6_Busy : <<extend>>
+UC2_View ..> UC2_AssignFromList : <<extend>>
+UC2 ..> UC2_View : <<extend>>
+UC5 ..> UC5_View : <<extend>>
+UC10 ..> UC10_View : <<extend>>
+UC9 ..> UC9_Permissions : <<include>>
+UC9 ..> UC9_Security : <<include>>
+
+@enduml
